@@ -1,6 +1,6 @@
 {
-  "name": "Classificados VivaLocal",
-  "description": "Um portal completo de anúncios classificados locais para compra, venda, serviços, empregos e imóveis.",
+  "name": "VivaLocal Classificados",
+  "description": "Anuncie grátis no VivaLocal Classificados. Encontre veículos, imóveis, empregos, serviços, eletrônicos, moda, animais e muito mais em todo o Brasil.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

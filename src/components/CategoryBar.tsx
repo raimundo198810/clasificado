@@ -1,5 +1,25 @@
 import React from "react";
-import { Home, Car, ShoppingBag, Briefcase, Wrench, Users, Grid, Heart } from "lucide-react";
+import {
+  Home,
+  Car,
+  ShoppingBag,
+  Briefcase,
+  Wrench,
+  Grid,
+  Heart,
+  Smartphone,
+  Shirt,
+  Smile,
+  BookOpen,
+  Hammer,
+  Utensils,
+  Calendar,
+  Activity,
+  Plane,
+  Trophy,
+  Book,
+  Building
+} from "lucide-react";
 import { AdCategory } from "../types";
 import { CATEGORY_LABELS } from "../lib/initialSeed";
 
@@ -10,13 +30,24 @@ interface CategoryBarProps {
 
 const CATEGORY_ICONS: Record<AdCategory | "all", React.ElementType> = {
   all: Grid,
-  imoveis: Home,
   veiculos: Car,
-  compra_venda: ShoppingBag,
+  imoveis: Home,
   empregos: Briefcase,
+  compra_venda: ShoppingBag,
+  tecnologia: Smartphone,
+  moda_beleza: Shirt,
+  animais: Smile,
+  cursos_educacao: BookOpen,
+  construcao_reforma: Hammer,
   servicos: Wrench,
-  comunidade: Users,
-  adulto: Heart
+  gastronomia: Utensils,
+  eventos: Calendar,
+  saude_bem_estar: Activity,
+  turismo_viagens: Plane,
+  esportes_lazer: Trophy,
+  livros_hobbies: Book,
+  empresas_negocios: Building,
+  relacionamentos: Heart
 };
 
 export default function CategoryBar({ selectedCategory, onSelectCategory }: CategoryBarProps) {

@@ -157,7 +157,7 @@ export default function FooterModal({ isOpen, onClose, initialTab = "sobre" }: F
                 V
               </span>
               <div>
-                <h4 className="text-sm font-black text-gray-900 tracking-tight leading-none">VivaLocal</h4>
+                <h4 className="text-sm font-black text-gray-900 tracking-tight leading-none">VivaLocal Classificados</h4>
                 <span className="text-[9px] text-[#E52B50] font-bold uppercase tracking-wider">Suporte Institucional</span>
               </div>
             </div>

@@ -24,51 +24,132 @@ import { CATEGORY_LABELS } from "../lib/initialSeed";
 import { collection, addDoc, updateDoc, doc } from "firebase/firestore";
 import { db, handleFirestoreError, OperationType } from "../firebase";
 
+const BRAZIL_STATES = [
+  { code: "AC", name: "Acre" },
+  { code: "AL", name: "Alagoas" },
+  { code: "AP", name: "Amapá" },
+  { code: "AM", name: "Amazonas" },
+  { code: "BA", name: "Bahia" },
+  { code: "CE", name: "Ceará" },
+  { code: "DF", name: "Distrito Federal" },
+  { code: "ES", name: "Espírito Santo" },
+  { code: "GO", name: "Goiás" },
+  { code: "MA", name: "Maranhão" },
+  { code: "MT", name: "Mato Grosso" },
+  { code: "MS", name: "Mato Grosso do Sul" },
+  { code: "MG", name: "Minas Gerais" },
+  { code: "PA", name: "Pará" },
+  { code: "PB", name: "Paraíba" },
+  { code: "PR", name: "Paraná" },
+  { code: "PE", name: "Pernambuco" },
+  { code: "PI", name: "Piauí" },
+  { code: "RJ", name: "Rio de Janeiro" },
+  { code: "RN", name: "Rio Grande do Norte" },
+  { code: "RS", name: "Rio Grande do Sul" },
+  { code: "RO", name: "Rondônia" },
+  { code: "RR", name: "Roraima" },
+  { code: "SC", name: "Santa Catarina" },
+  { code: "SP", name: "São Paulo" },
+  { code: "SE", name: "Sergipe" },
+  { code: "TO", name: "Tocantins" }
+];
+
 // Default stock thematic images fallback if user doesn't paste a link
 const STOCK_THEMATIC_IMAGES: Record<AdCategory, string[]> = {
-  imoveis: [
-    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&q=80&w=800"
-  ],
   veiculos: [
     "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=800"
+    "https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&q=80&w=800"
   ],
-  compra_venda: [
-    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1496181130204-755241524eab?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800"
+  imoveis: [
+    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1513584684374-8bab748fbf90?auto=format&fit=crop&q=80&w=800"
   ],
   empregos: [
     "https://images.unsplash.com/photo-1521898284481-a5ec348cb555?auto=format&fit=crop&q=80&w=800",
     "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
   ],
+  compra_venda: [
+    "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800"
+  ],
+  tecnologia: [
+    "https://images.unsplash.com/photo-1496181130204-755241524eab?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800"
+  ],
+  moda_beleza: [
+    "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?auto=format&fit=crop&q=80&w=800"
+  ],
+  animais: [
+    "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&q=80&w=800"
+  ],
+  cursos_educacao: [
+    "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=800"
+  ],
+  construcao_reforma: [
+    "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1581094794329-c8112a89af12?auto=format&fit=crop&q=80&w=800"
+  ],
   servicos: [
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=800",
     "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=800"
   ],
-  comunidade: [
-    "https://images.unsplash.com/photo-1516738901171-8eb4fc13bd20?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&q=80&w=800"
+  gastronomia: [
+    "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1498837167922-ddd27525d352?auto=format&fit=crop&q=80&w=800"
   ],
-  adulto: [
-    "https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1501901604258-fc48048f4a3c?auto=format&fit=crop&q=80&w=800",
-    "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?auto=format&fit=crop&q=80&w=800"
+  eventos: [
+    "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?auto=format&fit=crop&q=80&w=800"
+  ],
+  saude_bem_estar: [
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&q=80&w=800"
+  ],
+  turismo_viagens: [
+    "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&q=80&w=800"
+  ],
+  esportes_lazer: [
+    "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b?auto=format&fit=crop&q=80&w=800"
+  ],
+  livros_hobbies: [
+    "https://images.unsplash.com/photo-1495312040802-a929cd14a6ab?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&q=80&w=800"
+  ],
+  empresas_negocios: [
+    "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&q=80&w=800"
+  ],
+  relacionamentos: [
+    "https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&q=80&w=800",
+    "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&q=80&w=800"
   ]
 };
 
 // Default static subcategories list
 export const DEFAULT_SUBCATEGORIES: Record<AdCategory, string[]> = {
-  imoveis: ["Apartamentos", "Casas", "Terrenos", "Temporada", "Comercial", "Outros"],
-  veiculos: ["Carros", "Motos", "Caminhões", "Peças e Acessórios", "Náutica", "Outros"],
-  compra_venda: ["Eletrônicos", "Celulares", "Móveis e Decoração", "Moda e Beleza", "Esportes", "Brinquedos", "Outros"],
-  empregos: ["Tecnologia e TI", "Vendas e Comercial", "Administrativo", "Serviços Gerais", "Atendimento", "Outros"],
-  servicos: ["Assistência Técnica", "Reformas e Reparos", "Aulas Particulares", "Beleza e Estética", "Eventos", "Outros"],
-  comunidade: ["Doação de Animais", "Achados e Perdidos", "Grupos Sociais", "Eventos Locais", "Outros"],
-  adulto: ["Encontros", "Vídeos", "Massagens", "Acompanhantes", "Produtos Sensuais", "Outros"]
+  veiculos: ["Carros", "Motos", "Caminhões", "Vans", "Ônibus", "Barcos", "Peças e Acessórios", "Serviços Automotivos"],
+  imoveis: ["Casas à Venda", "Casas para Alugar", "Apartamentos à Venda", "Apartamentos para Alugar", "Terrenos", "Chácaras e Sítios", "Salas Comerciais", "Galpões", "Temporada"],
+  empregos: ["Vagas de Emprego", "Estágios", "Jovem Aprendiz", "Freelancer", "Home Office", "Currículos"],
+  compra_venda: ["Eletrônicos", "Celulares", "Computadores", "TVs e Áudio", "Eletrodomésticos", "Móveis", "Decoração", "Ferramentas", "Utilidades Domésticas"],
+  tecnologia: ["Smartphones", "Notebooks", "Tablets", "Games", "Consoles", "Informática", "Acessórios"],
+  moda_beleza: ["Roupas Femininas", "Roupas Masculinas", "Calçados", "Bolsas", "Joias e Relógios", "Cosméticos", "Perfumes"],
+  animais: ["Cachorros", "Gatos", "Aves", "Peixes", "Cavalos", "Acessórios para Pets", "Serviços Veterinários"],
+  cursos_educacao: ["Cursos Online", "Idiomas", "Informática", "Reforço Escolar", "Concursos", "Faculdades"],
+  construcao_reforma: ["Materiais de Construção", "Pintura", "Elétrica", "Hidráulica", "Marcenaria", "Serviços Gerais"],
+  servicos: ["Diaristas", "Encanadores", "Eletricistas", "Pedreiros", "Pintores", "Jardineiros", "Chaveiros", "Técnicos em Informática"],
+  gastronomia: ["Restaurantes", "Lanchonetes", "Marmitas", "Bolos e Doces", "Buffets", "Delivery"],
+  eventos: ["Casamentos", "Festas", "Decoração", "Fotografia", "Som e Iluminação", "Espaços para Eventos"],
+  saude_bem_estar: ["Clínicas", "Dentistas", "Psicólogos", "Fisioterapia", "Academias", "Nutrição"],
+  turismo_viagens: ["Pacotes de Viagem", "Hotéis", "Pousadas", "Excursões", "Passagens"],
+  esportes_lazer: ["Bicicletas", "Academia", "Pesca", "Camping", "Futebol", "Artes Marciais"],
+  livros_hobbies: ["Livros", "Revistas", "Colecionáveis", "Artesanato", "Instrumentos Musicais"],
+  empresas_negocios: ["Franquias", "Equipamentos Comerciais", "Máquinas", "Oportunidades de Negócios"],
+  relacionamentos: ["Amizades", "Grupos Sociais", "Eventos Sociais"]
 };
 
 type AdPlanType = "gratis" | "destaque_7" | "destaque_30" | "vip";
@@ -149,6 +230,42 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
     sentiment?: string;
     reasoning?: string;
   } | null>(null);
+
+  const [citiesList, setCitiesList] = useState<string[]>([]);
+  const [loadingCities, setLoadingCities] = useState(false);
+
+  useEffect(() => {
+    if (!locationState) {
+      setCitiesList([]);
+      return;
+    }
+    let isMounted = true;
+    setLoadingCities(true);
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${locationState}/municipios?ordenar=nome`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Erro ao buscar cidades");
+        return res.json();
+      })
+      .then((data: Array<{ nome: string }>) => {
+        if (isMounted) {
+          const names = data.map((item) => item.nome);
+          setCitiesList(names);
+          if (names.length > 0 && !names.includes(locationCity)) {
+            setLocationCity(names[0]);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar cidades do IBGE", err);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingCities(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [locationState]);
 
   const [formError, setFormError] = useState("");
   const [publishing, setPublishing] = useState(false);
@@ -1154,29 +1271,55 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-700 block">Estado (UF) <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
+                <select
                   required
-                  maxLength={2}
-                  placeholder="Ex: SP"
                   value={locationState}
-                  onChange={(e) => setLocationState(e.target.value.toUpperCase())}
+                  onChange={(e) => setLocationState(e.target.value)}
                   className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 bg-white font-semibold"
                   id="viva-post-state"
-                />
+                >
+                  {BRAZIL_STATES.map((st) => (
+                    <option key={st.code} value={st.code}>
+                      {st.name} ({st.code})
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-gray-700 block">Cidade <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Osasco"
-                  value={locationCity}
-                  onChange={(e) => setLocationCity(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 bg-white font-semibold"
-                  id="viva-post-city"
-                />
+                {loadingCities ? (
+                  <select
+                    disabled
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 bg-gray-50 font-semibold cursor-not-allowed text-gray-400"
+                  >
+                    <option>Carregando cidades...</option>
+                  </select>
+                ) : citiesList.length > 0 ? (
+                  <select
+                    required
+                    value={locationCity}
+                    onChange={(e) => setLocationCity(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 bg-white font-semibold"
+                    id="viva-post-city"
+                  >
+                    {citiesList.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Digite a cidade..."
+                    value={locationCity}
+                    onChange={(e) => setLocationCity(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-amber-500 bg-white font-semibold"
+                    id="viva-post-city"
+                  />
+                )}
               </div>
             </div>
 

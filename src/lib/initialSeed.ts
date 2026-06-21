@@ -3,47 +3,113 @@ import { db } from "../firebase";
 import { Ad, AdCategory } from "../types";
 
 export const CATEGORY_LABELS: Record<AdCategory, { label: string; icon: string; description: string; color: string }> = {
-  imoveis: {
-    label: "Imóveis",
-    icon: "Home",
-    description: "Casas, apartamentos, terrenos e escritórios para comprar ou alugar",
-    color: "from-blue-500 to-indigo-600"
-  },
   veiculos: {
     label: "Veículos",
     icon: "Car",
-    description: "Carros, motos, utilitários, peças de reposição e acessórios",
+    description: "Carros, motos, caminhões, barcos e autopeças",
     color: "from-amber-500 to-orange-600"
   },
-  compra_venda: {
-    label: "Compra & Venda",
-    icon: "ShoppingBag",
-    description: "Eletrônicos, smartphones, vestuário, móveis, decoração e mais",
-    color: "from-emerald-500 to-teal-600"
+  imoveis: {
+    label: "Imóveis",
+    icon: "Home",
+    description: "Aluguel e compra de casas, apartamentos e terrenos",
+    color: "from-blue-500 to-indigo-600"
   },
   empregos: {
     label: "Empregos",
     icon: "Briefcase",
-    description: "Oportunidades de trabalho em regime integral, meio período e freelas",
+    description: "Vagas de trabalho, estágios, home-office e currículos",
     color: "from-purple-500 to-violet-600"
+  },
+  compra_venda: {
+    label: "Compra e Venda",
+    icon: "ShoppingBag",
+    description: "Móveis, eletrodomésticos, decoração e utilidades",
+    color: "from-emerald-500 to-teal-600"
+  },
+  tecnologia: {
+    label: "Tecnologia",
+    icon: "Smartphone",
+    description: "Celulares, notebooks, informática e games",
+    color: "from-cyan-500 to-blue-600"
+  },
+  moda_beleza: {
+    label: "Moda e Beleza",
+    icon: "Shirt",
+    description: "Vestuário, calçados, bolsas e cosméticos",
+    color: "from-pink-500 to-rose-600"
+  },
+  animais: {
+    label: "Animais",
+    icon: "Smile",
+    description: "Gatos, cachorros, acessórios e serviços pet",
+    color: "from-orange-500 to-amber-600"
+  },
+  cursos_educacao: {
+    label: "Cursos e Educação",
+    icon: "BookOpen",
+    description: "Cursos online, idiomas, reforço e concursos",
+    color: "from-teal-500 to-emerald-600"
+  },
+  construcao_reforma: {
+    label: "Construção",
+    icon: "Hammer",
+    description: "Materiais de construção, pintura e serviços gerais",
+    color: "from-yellow-600 to-orange-700"
   },
   servicos: {
     label: "Serviços",
     icon: "Wrench",
-    description: "Reformas, marido de aluguel, aulas particulares, TI e beleza",
-    color: "from-cyan-500 to-sky-600"
+    description: "Diaristas, eletricistas, encanadores e reparos",
+    color: "from-sky-500 to-cyan-600"
   },
-  comunidade: {
-    label: "Comunidade",
-    icon: "Users",
-    description: "Doação de animais, achados e perdidos, eventos de bairro e grupos",
-    color: "from-rose-500 to-pink-600"
+  gastronomia: {
+    label: "Gastronomia",
+    icon: "Utensils",
+    description: "Restaurantes, marmitas, doces e delivery",
+    color: "from-red-500 to-orange-600"
   },
-  adulto: {
-    label: "Conteúdo Adulto",
+  eventos: {
+    label: "Eventos",
+    icon: "Calendar",
+    description: "Festas, casamentos, fotografia e iluminação",
+    color: "from-fuchsia-500 to-purple-600"
+  },
+  saude_bem_estar: {
+    label: "Saúde e Bem-Estar",
+    icon: "Activity",
+    description: "Clínicas, academias, dentistas e bem-estar",
+    color: "from-rose-500 to-red-600"
+  },
+  turismo_viagens: {
+    label: "Turismo e Viagens",
+    icon: "Plane",
+    description: "Pacotes de viagem, hotéis e excursões",
+    color: "from-indigo-500 to-blue-600"
+  },
+  esportes_lazer: {
+    label: "Esportes e Lazer",
+    icon: "Trophy",
+    description: "Bicicletas, camping, pesca e futebol",
+    color: "from-lime-500 to-green-600"
+  },
+  livros_hobbies: {
+    label: "Livros e Hobbies",
+    icon: "Book",
+    description: "Livros, instrumentos musicais e artesanato",
+    color: "from-violet-500 to-fuchsia-600"
+  },
+  empresas_negocios: {
+    label: "Empresas",
+    icon: "Building",
+    description: "Equipamentos, franquias e negócios",
+    color: "from-stone-500 to-neutral-600"
+  },
+  relacionamentos: {
+    label: "Relacionamentos",
     icon: "Heart",
-    description: "Anúncios, encontros, produtos sensuais e entretenimento adulto (+18)",
-    color: "from-red-500 to-rose-700"
+    description: "Amizades, encontros e eventos sociais",
+    color: "from-red-500 to-pink-600"
   }
 };
 

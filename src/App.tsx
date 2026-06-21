@@ -337,14 +337,14 @@ export default function App() {
             <div className="max-w-2xl relative z-10 space-y-4" style={{ transform: "translateZ(30px)" }}>
               <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1.5 border border-white/20">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Novo Portal de Classificados VivaLocal 2026
+                VivaLocal Classificados - Todo o Brasil
               </span>
               <h1 className="text-3xl sm:text-4xl font-extrabold font-sans tracking-tight leading-tight" style={{ transform: "translateZ(40px)" }}>
                 Anuncie Grátis no Portal <br />
                 <span className="text-amber-305 font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-250 to-amber-300">Nº 1 em Negócios Locais</span>
               </h1>
               <p className="text-xs sm:text-sm text-rose-50 leading-relaxed font-semibold" style={{ transform: "translateZ(30px)" }}>
-                Milhares de pessoas compram e vendem diariamente. Publique carros, celulares, imóveis, serviços urbanos, vagas de emprego e encontros no canal adulto com total segurança comercial e anonimato garantido.
+                Compre, venda e anuncie com facilidade em todo o Brasil. Encontre veículos, imóveis, empregos, serviços, eletrônicos, tecnologia, moda, animais, cursos e muito mais perto de você com total segurança.
               </p>
               <div className="flex flex-wrap gap-3 pt-3" style={{ transform: "translateZ(35px)" }}>
                 <button
@@ -548,8 +548,8 @@ export default function App() {
                   V
                 </span>
                 <div>
-                  <h4 className="text-sm font-black text-gray-900 tracking-tight leading-none">VivaLocal</h4>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Classificados do Brasil</span>
+                  <h4 className="text-sm font-black text-gray-900 tracking-tight leading-none">VivaLocal Classificados</h4>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Compre, venda e anuncie</span>
                 </div>
               </div>
               <p className="text-xs text-gray-500 leading-relaxed max-w-sm font-semibold">
@@ -640,7 +640,7 @@ export default function App() {
           </div>
 
           <div className="pt-10 mt-10 border-t border-gray-150 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 font-semibold" id="viva-footer-rights-row">
-            <p>© 2026 Todos os direitos reservados. Vivalocal Classificados</p>
+            <p>© 2026 Todos os direitos reservados. VivaLocal Classificados</p>
             <div className="flex gap-6">
               <span className="flex items-center gap-1.5 text-gray-450">
                 <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

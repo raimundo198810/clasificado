@@ -75,6 +75,39 @@ export default function Header({
   const [cepError, setCepError] = React.useState("");
   const [cepSuccess, setCepSuccess] = React.useState(false);
 
+  const [citiesList, setCitiesList] = React.useState<string[]>([]);
+  const [loadingCities, setLoadingCities] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!selectedState) {
+      setCitiesList([]);
+      return;
+    }
+    let isMounted = true;
+    setLoadingCities(true);
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios?ordenar=nome`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Erro ao buscar cidades");
+        return res.json();
+      })
+      .then((data: Array<{ nome: string }>) => {
+        if (isMounted) {
+          const names = data.map((item) => item.nome);
+          setCitiesList(names);
+        }
+      })
+      .catch((err) => {
+        console.error("Erro ao carregar cidades do IBGE no Header", err);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingCities(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedState]);
+
   React.useEffect(() => {
     if (!selectedState && !selectedCity) {
       setCep("");
@@ -327,18 +360,42 @@ export default function Header({
               </select>
             </div>
 
-            {/* City input filter */}
+            {/* City input/select filter */}
             {selectedState && (
-              <div className="relative flex-1 md:flex-initial">
-                <input
-                  type="text"
-                  placeholder="Cidade..."
-                  value={selectedCity}
-                  onChange={(e) => setSelectedCity(e.target.value)}
-                  className="w-full md:w-[120px] px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#E52B50] focus:border-[#E52B50] bg-white"
-                  title="Filtro de cidade"
-                  id="viva-input-city"
-                />
+              <div className="relative flex-1 md:flex-initial min-w-[140px]">
+                {loadingCities ? (
+                  <select
+                    disabled
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#E52B50] focus:border-[#E52B50] bg-gray-50 text-gray-400 font-semibold cursor-not-allowed"
+                  >
+                    <option>Carregando cidades...</option>
+                  </select>
+                ) : citiesList.length > 0 ? (
+                  <select
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#E52B50] focus:border-[#E52B50] bg-white text-gray-700 font-medium"
+                    title="Filtro de cidade"
+                    id="viva-select-city"
+                  >
+                    <option value="">Todas as Cidades</option>
+                    {citiesList.map((city) => (
+                      <option key={city} value={city}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="Cidade..."
+                    value={selectedCity}
+                    onChange={(e) => setSelectedCity(e.target.value)}
+                    className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-[#E52B50] focus:border-[#E52B50] bg-white text-gray-700 font-medium"
+                    title="Filtro de cidade"
+                    id="viva-input-city"
+                  />
+                )}
               </div>
             )}
 

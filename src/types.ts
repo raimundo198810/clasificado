@@ -24,13 +24,24 @@ export interface Ad {
 }
 
 export type AdCategory =
-  | "imoveis"      // Real Estate
-  | "veiculos"     // Vehicles
-  | "compra_venda" // Buy & Sell
-  | "empregos"     // Jobs
-  | "servicos"     // Services
-  | "comunidade"   // Community
-  | "adulto";      // Adult/Sexy/Sensual
+  | "veiculos"
+  | "imoveis"
+  | "empregos"
+  | "compra_venda"
+  | "tecnologia"
+  | "moda_beleza"
+  | "animais"
+  | "cursos_educacao"
+  | "construcao_reforma"
+  | "servicos"
+  | "gastronomia"
+  | "eventos"
+  | "saude_bem_estar"
+  | "turismo_viagens"
+  | "esportes_lazer"
+  | "livros_hobbies"
+  | "empresas_negocios"
+  | "relacionamentos";
 
 export type AdCondition = "" | "novo" | "usado" | "nao_aplica";
 
