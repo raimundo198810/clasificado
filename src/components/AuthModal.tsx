@@ -38,6 +38,24 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         createdAt: Date.now(),
         isAdmin: true
       };
+
+      // Sync Admin User to MySQL Database
+      try {
+        await fetch("/api/mysql/save-user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: adminUser.uid,
+            email: adminUser.email,
+            displayName: adminUser.displayName,
+            phoneNumber: adminUser.phoneNumber
+          })
+        });
+        console.log("Admin Raimundo synchronized to MySQL successfully!");
+      } catch (mysqlErr) {
+        console.error("Erro ao registrar Admin no MySQL:", mysqlErr);
+      }
+
       localStorage.setItem("viva_mock_user", JSON.stringify(adminUser));
       window.dispatchEvent(new Event("viva_local_auth_changed"));
       onSuccess();
@@ -63,9 +81,43 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         if (phone) {
           localStorage.setItem(`viva_phone_${userCredential.user.uid}`, phone);
         }
+
+        // Sync Registered User to MySQL Database
+        try {
+          await fetch("/api/mysql/save-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: userCredential.user.uid,
+              email: userCredential.user.email || cleanEmail,
+              displayName: displayName,
+              phoneNumber: phone || null
+            })
+          });
+          console.log("Newly registered user synchronized to MySQL successfully!");
+        } catch (mysqlErr) {
+          console.error("Erro ao registrar novo Usuário no MySQL:", mysqlErr);
+        }
       } else {
         // Sign In
-        await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+        const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, cleanPassword);
+
+        // Sync active login to MySQL Database
+        try {
+          await fetch("/api/mysql/save-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: userCredential.user.uid,
+              email: userCredential.user.email || cleanEmail,
+              displayName: userCredential.user.displayName || userCredential.user.email?.split("@")[0] || "Usuário VivaLocal",
+              phoneNumber: localStorage.getItem(`viva_phone_${userCredential.user.uid}`) || null
+            })
+          });
+          console.log("Login user synchronized to MySQL successfully!");
+        } catch (mysqlErr) {
+          console.error("Erro ao sincronizar session login com MySQL:", mysqlErr);
+        }
       }
       onSuccess();
       onClose();
@@ -81,6 +133,24 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
           displayName: displayName || email.split("@")[0] || "Usuário VivaLocal",
           createdAt: Date.now()
         };
+
+        // Sync local mock user fallback to MySQL
+        try {
+          await fetch("/api/mysql/save-user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              uid: mockUid,
+              email: email,
+              displayName: localMockUser.displayName,
+              phoneNumber: phone || null
+            })
+          });
+          console.log("Fallback mock user synchronized to MySQL successfully!");
+        } catch (mysqlErr) {
+          console.error("Erro ao sincronizar fallback local no MySQL:", mysqlErr);
+        }
+
         localStorage.setItem("viva_mock_user", JSON.stringify(localMockUser));
         if (phone) {
           localStorage.setItem(`viva_phone_${mockUid}`, phone);

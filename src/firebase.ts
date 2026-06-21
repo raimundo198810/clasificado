@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeFirestore, doc, getDocFromServer } from "firebase/firestore";
 
 // Config values matching firebase-applet-config.json
 const firebaseConfig = {
@@ -20,6 +20,17 @@ export const auth = getAuth(app);
 
 // Initialize custom-named Firestore instance
 export const db = initializeFirestore(app, {}, "ai-studio-bae4df66-18fa-4482-8d6d-b21ec5e49560");
+
+async function testConnection() {
+  try {
+    await getDocFromServer(doc(db, 'test', 'connection'));
+  } catch (error) {
+    if(error instanceof Error && error.message.includes('the client is offline')) {
+      console.error("Please check your Firebase configuration.");
+    }
+  }
+}
+testConnection();
 
 // Standard firestore error handling per Firebase Skill instructions
 export enum OperationType {

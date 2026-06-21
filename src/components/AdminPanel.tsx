@@ -52,9 +52,49 @@ export default function AdminPanel({ isOpen, onClose, allAds }: AdminPanelProps)
   // Statistics summaries
   const [simulatedViewsCount, setSimulatedViewsCount] = useState(4820);
 
+  // Locaweb MySQL Database indicators states
+  const [mysqlStatus, setMysqlStatus] = useState<{ connected: boolean; host?: string; database?: string; user?: string; tablesCount?: number; error?: string } | null>(null);
+  const [syncingMysql, setSyncingMysql] = useState(false);
+  const [mysqlMessage, setMysqlMessage] = useState("");
+
+  const fetchMysqlStatus = async () => {
+    try {
+      const res = await fetch("/api/mysql/status");
+      const data = await res.json();
+      setMysqlStatus(data);
+    } catch (e: any) {
+      console.error("Error fetching MySQL Status:", e);
+      setMysqlStatus({ connected: false, error: e.message || "Falha ao consultar API" });
+    }
+  };
+
+  const handleMysqlSync = async () => {
+    setSyncingMysql(true);
+    setMysqlMessage("");
+    try {
+      const res = await fetch("/api/mysql/sync-ads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ads: allAds })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMysqlMessage("✅ Sincronização realizada com sucesso! Os anúncios e fotos foram gravados na Locaweb.");
+        fetchMysqlStatus();
+      } else {
+        setMysqlMessage("❌ Falha na sincronização: " + (data.error || "Erro desconhecido"));
+      }
+    } catch (e: any) {
+      setMysqlMessage("❌ Erro de conexão de rede: " + e.message);
+    } finally {
+      setSyncingMysql(false);
+    }
+  };
+
   // Load custom values on init
   useEffect(() => {
     if (isOpen) {
+      fetchMysqlStatus();
       // Load custom subcategories
       const savedSubs = localStorage.getItem("viva_custom_subcategories");
       if (savedSubs) {
@@ -171,11 +211,11 @@ export default function AdminPanel({ isOpen, onClose, allAds }: AdminPanelProps)
 
   // Computation of statistics
   const pendingAds = allAds.filter(ad => ad.status === "pending");
-  const approvedAds = allAds.filter(ad => ad.status === "approved");
-  const vipCount = allAds.filter(ad => ad.planType === "vip" && ad.status === "approved").length;
-  const destaque30Count = allAds.filter(ad => ad.planType === "destaque_30" && ad.status === "approved").length;
-  const destaque7Count = allAds.filter(ad => ad.planType === "destaque_7" && ad.status === "approved").length;
-  const gratisCount = allAds.filter(ad => ad.planType === "gratis" && ad.status === "approved").length;
+  const approvedAds = allAds.filter(ad => ad.status === "approved" || ad.status === "publicado");
+  const vipCount = allAds.filter(ad => ad.planType === "vip" && (ad.status === "approved" || ad.status === "publicado")).length;
+  const destaque30Count = allAds.filter(ad => ad.planType === "destaque_30" && (ad.status === "approved" || ad.status === "publicado")).length;
+  const destaque7Count = allAds.filter(ad => ad.planType === "destaque_7" && (ad.status === "approved" || ad.status === "publicado")).length;
+  const gratisCount = allAds.filter(ad => ad.planType === "gratis" && (ad.status === "approved" || ad.status === "publicado")).length;
 
   // Sum total payments received
   const totalArrecadado = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
@@ -259,7 +299,85 @@ export default function AdminPanel({ isOpen, onClose, allAds }: AdminPanelProps)
           {/* A) STATS RESUMO TAB */}
           {activeTab === "stats" && (
             <div className="space-y-6">
-              <h3 className="text-sm font-extrabold text-amber-500 uppercase tracking-widest mb-4">Estatísticas Gerais do Sistema</h3>
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <h3 className="text-sm font-extrabold text-amber-500 uppercase tracking-widest">Estatísticas Gerais do Sistema</h3>
+                <span className="text-[10px] text-slate-400 font-extrabold select-none">CONECTOR ATIVO: vivalocal.mysql.dbaas.com.br</span>
+              </div>
+
+              {/* Locaweb MySQL Integration Board */}
+              <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-md">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                  <div>
+                    <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-wider block">Serviço de Banco de Dados de Produção</span>
+                    <h4 className="text-sm font-black text-white mt-0.5">🔌 Banco de Dados MySQL (Locaweb)</h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {mysqlStatus?.connected ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                        <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                        CONECTADO
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 rounded-full">
+                        <span className="w-2 h-2 bg-red-400 rounded-full animate-ping"></span>
+                        DESCONECTADO
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={fetchMysqlStatus}
+                      className="p-1 px-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg cursor-pointer transition-all"
+                      title="Atualizar status de conexão"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div className="space-y-1">
+                    <span className="text-slate-400 font-bold block">Conexão Host:</span>
+                    <span className="font-mono text-amber-400/90 select-all tracking-wide">{mysqlStatus?.host || "vivalocal.mysql.dbaas.com.br"}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-slate-400 font-bold block">Banco e Usuário:</span>
+                    <span className="font-mono text-slate-300">Base: <strong className="text-slate-105 font-bold">vivalocal</strong> | User: <strong className="text-slate-105 font-bold">vivalocal</strong></span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-slate-400 font-bold block">Tabelas Identificadas:</span>
+                    <span className="text-slate-300 font-bold">{mysqlStatus?.connected ? "4 tabelas prontas (anuncios, fotos_anuncios, usuarios, pagamentos)" : "Conectando..."}</span>
+                  </div>
+                </div>
+
+                {mysqlStatus?.error && (
+                  <div className="p-3 bg-red-500/5 border border-red-500/20 rounded-xl text-xs text-red-400 font-semibold flex gap-2 items-center">
+                    <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                    <span>Falha na conexão: {mysqlStatus.error}</span>
+                  </div>
+                )}
+
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleMysqlSync}
+                    disabled={syncingMysql}
+                    className="w-full sm:w-auto px-5 py-2.5 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-black uppercase text-[10px] tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncingMysql ? 'animate-spin' : ''}`} />
+                    <span>Sincronizar Todos os Anúncios para o MySQL</span>
+                  </button>
+
+                  <p className="text-[10px] text-slate-400 font-medium">
+                    Clique para exportar em lote todos os anúncios locais e imagens cadastradas na Firestore no banco MySQL Locaweb.
+                  </p>
+                </div>
+
+                {mysqlMessage && (
+                  <div className={`p-3 rounded-xl border text-xs font-semibold ${mysqlMessage.includes("❌") ? "bg-red-500/5 border-red-500/20 text-red-400" : "bg-emerald-500/5 border-emerald-500/20 text-emerald-400"}`}>
+                    {mysqlMessage}
+                  </div>
+                )}
+              </div>
               
               {/* Stat Tiles row */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

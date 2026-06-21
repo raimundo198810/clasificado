@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "Ad": {
+      "title": "Ad",
+      "description": "A classified advertisement posted on VivaLocal",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Title of the advertisement" },
+        "description": { "type": "string", "description": "Detailed description of the item or service" },
+        "category": { "type": "string", "description": "General category" },
+        "subCategory": { "type": "string", "description": "Subcategory" },
+        "price": { "type": "number", "description": "Price of the listing in BRL" },
+        "condition": { "type": "string", "description": "State of the item" },
+        "locationState": { "type": "string", "description": "Brazilian state code" },
+        "locationCity": { "type": "string", "description": "City of listing" },
+        "sellerName": { "type": "string", "description": "Full name of the advertiser" },
+        "sellerEmail": { "type": "string", "description": "Contact email of advertiser" },
+        "sellerPhone": { "type": "string", "description": "Phone number or WhatsApp" },
+        "sellerId": { "type": "string", "description": "Creator user authentication identifier" },
+        "images": { "type": "array", "description": "List of up to 5 uploaded image links" },
+        "videoUrl": { "type": "string", "description": "Optional video URL for paid ad tiers" },
+        "sellerPhotoUrl": { "type": "string", "description": "Profile picture of the seller" },
+        "views": { "type": "number", "description": "View counts of the ad page" },
+        "featured": { "type": "boolean", "description": "Whether the ad is premium and highlighted" },
+        "planType": { "type": "string", "description": "Selected plan type: gratis, destaque_7, destaque_30, vip" },
+        "status": { "type": "string", "description": "Active state: pending, approved, publicado" },
+        "tipo_plano": { "type": "string", "description": "Selected checkout plan" },
+        "dias_destaque": { "type": "number", "description": "Number of active highlight days" },
+        "data_expiracao": { "type": "string", "description": "Expiration date format DD/MM/YYYY" },
+        "createdAt": { "type": "number", "description": "Epoch millisecond when ad was created" },
+        "tags": { "type": "array", "description": "Ad tags for rapid search results indexing" }
+      },
+      "required": ["title", "description", "category", "price", "locationState", "locationCity", "sellerName", "sellerEmail", "sellerPhone", "sellerId", "createdAt"]
+    },
+    "FotoAnuncio": {
+      "title": "FotoAnuncio",
+      "description": "An image mapped to an advertisement",
+      "type": "object",
+      "properties": {
+        "adId": { "type": "string", "description": "Associated advertisement id" },
+        "images": { "type": "array", "description": "Array of original photo URLs" },
+        "createdAt": { "type": "number", "description": "Timestamp when mapping was saved" }
+      },
+      "required": ["adId", "images", "createdAt"]
+    },
+    "PaymentLog": {
+      "title": "PaymentLog",
+      "description": "Log trace of payments processed for a premium ad plan",
+      "type": "object",
+      "properties": {
+        "adId": { "type": "string", "description": "Associated ad identifier" },
+        "adTitle": { "type": "string", "description": "Purchased ad title" },
+        "planType": { "type": "string", "description": "Ad plan identifier" },
+        "amount": { "type": "number", "description": "Total payment price in BRL" },
+        "payerEmail": { "type": "string", "description": "Purchasor registration email" },
+        "payerName": { "type": "string", "description": "Payer identity details" },
+        "paymentMethod": { "type": "string", "description": "Accepted merchant provider: pix, cartao" },
+        "status": { "type": "string", "description": "Gateway status: pending, approved" },
+        "createdAt": { "type": "number", "description": "Creation timestamp" }
+      },
+      "required": ["adId", "adTitle", "planType", "amount", "payerEmail", "payerName", "paymentMethod", "status", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Active messaging conversation channel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "adId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "lastMessageTime": { "type": "number" }
+      },
+      "required": ["adId", "sellerId", "buyerId"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Message item in a discussion chain",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["chatId", "senderId", "text", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/ads/{adId}": {
+      "schema": { "$ref": "#/entities/Ad" },
+      "description": "Store classified advertisements"
+    },
+    "/anuncios/{anuncioId}": {
+      "schema": { "$ref": "#/entities/Ad" },
+      "description": "Mirror store classified advertisements for Portuguese naming compliance"
+    },
+    "/fotos_anuncios/{fotoAnuncioId}": {
+      "schema": { "$ref": "#/entities/FotoAnuncio" },
+      "description": "Explicit association mapping containing images uploaded to ads"
+    },
+    "/payments/{paymentId}": {
+      "schema": { "$ref": "#/entities/PaymentLog" },
+      "description": "Payment logs database archive"
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/Chat" },
+      "description": "Messaging chats and metadata"
+    },
+    "/chatMessages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Chat messages collection logs"
+    }
+  }
+}

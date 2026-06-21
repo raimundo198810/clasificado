@@ -568,6 +568,7 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
   // Submit ad creation
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    console.log('Botão Concluir & Publicar clicado');
     setFormError("");
 
     if (!currentUser) {
@@ -592,6 +593,10 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
       return;
     }
 
+    if (adPlan !== "gratis") {
+      console.log('Pagamento aprovado');
+    }
+
     setPublishing(true);
 
     try {
@@ -610,6 +615,29 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
 
       // Parse price using robust cleaning of Brazilian Currency formatting (e.g., R$ 1.500,00 -> 1500)
       const parsedPriceVal = parseFloat(price.toString().replace(/[^\d.,]/g, "").replace(".", "").replace(",", ".")) || parseFloat(price) || 0;
+
+      // Days highlighting calculation based on selected adPlan
+      let daysDestaque: number | undefined = undefined;
+      let expirationDateVal: string | undefined = undefined;
+
+      if (adPlan === "destaque_7") {
+        daysDestaque = 7;
+      } else if (adPlan === "destaque_30") {
+        daysDestaque = 30;
+      } else if (adPlan === "vip") {
+        daysDestaque = 30; // VIP is typically 30 days
+      }
+
+      if (daysDestaque) {
+        const expDate = new Date();
+        expDate.setDate(expDate.getDate() + daysDestaque);
+        
+        // Define data_expiracao formatted as "DD/MM/YYYY" or Brazilian locale format
+        const day = String(expDate.getDate()).padStart(2, "0");
+        const month = String(expDate.getMonth() + 1).padStart(2, "0");
+        const year = expDate.getFullYear();
+        expirationDateVal = `${day}/${month}/${year}`;
+      }
 
       // Assemble new ad
       const newAd: Omit<Ad, "id"> = {
@@ -631,7 +659,10 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
         views: 0,
         featured: adPlan !== "gratis",
         planType: adPlan,
-        status: "approved", // Published successfully & automatically approved/published as requested
+        status: adPlan !== "gratis" ? "publicado" : "approved",
+        tipo_plano: adPlan !== "gratis" ? adPlan : undefined,
+        dias_destaque: daysDestaque,
+        data_expiracao: expirationDateVal,
         createdAt: Date.now(),
         tags: [
           category, 
@@ -642,8 +673,78 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
       };
 
       // Create doc inside Firestore
-      const docRef = await addDoc(collection(db, "ads"), newAd);
-      await updateDoc(doc(db, "ads", docRef.id), { id: docRef.id });
+      let docRef;
+      try {
+        docRef = await addDoc(collection(db, "ads"), newAd);
+        await updateDoc(doc(db, "ads", docRef.id), { id: docRef.id });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, "ads");
+        throw err;
+      }
+
+      try {
+        const docAnuncioRef = await addDoc(collection(db, "anuncios"), { ...newAd, id: docRef.id });
+        await updateDoc(doc(db, "anuncios", docAnuncioRef.id), { id: docAnuncioRef.id });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.CREATE, "anuncios");
+        throw err;
+      }
+
+      if (finalImages && finalImages.length > 0) {
+        try {
+          const docFotoRef = await addDoc(collection(db, "fotos_anuncios"), {
+            adId: docRef.id,
+            images: finalImages,
+            createdAt: Date.now()
+          });
+          await updateDoc(doc(db, "fotos_anuncios", docFotoRef.id), { id: docFotoRef.id });
+        } catch (err) {
+          handleFirestoreError(err, OperationType.CREATE, "fotos_anuncios");
+          throw err;
+        }
+      }
+
+      console.log('Anúncio salvo com sucesso');
+      if (adPlan === "destaque_7") {
+        console.log('Plano DESTAQUE_7 ativado');
+      }
+
+      // Dual-write to MySQL Database (vivalocal.mysql.dbaas.com.br)
+      try {
+        await fetch("/api/mysql/save-ad", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: docRef.id,
+            title,
+            description: details,
+            category,
+            subCategory: subCategory || null,
+            price: parsedPriceVal,
+            condition: category === "empregos" || category === "servicos" ? "nao_aplica" : condition,
+            locationState,
+            locationCity,
+            sellerName: sellerName || currentUser.displayName || "Anunciante VivaLocal",
+            sellerEmail: sellerEmail || currentUser.email || "",
+            sellerPhone: sellerPhone || "(11) 99999-9999",
+            sellerId: currentUser.uid,
+            videoUrl: videoUrl ? videoUrl.trim() : null,
+            sellerPhotoUrl: sellerPhotoUrl ? sellerPhotoUrl.trim() : null,
+            views: 0,
+            featured: adPlan !== "gratis",
+            planType: adPlan,
+            status: adPlan !== "gratis" ? "publicado" : "approved",
+            tipo_plano: adPlan !== "gratis" ? adPlan : null,
+            dias_destaque: daysDestaque,
+            data_expiracao: expirationDateVal,
+            createdAt: Date.now(),
+            images: finalImages
+          })
+        });
+        console.log("Sucesso ao registrar anúncio no MySQL.");
+      } catch (mysqlErr) {
+        console.error("Falha ao sincronizar com banco de dados MySQL durável (não-bloqueante):", mysqlErr);
+      }
 
       // Save payment trace if paid plan was done
       if (adPlan !== "gratis") {
@@ -659,7 +760,33 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
           status: "approved",
           createdAt: Date.now()
         };
-        await addDoc(collection(db, "payments"), paymentPayload);
+        try {
+          await addDoc(collection(db, "payments"), paymentPayload);
+        } catch (err) {
+          handleFirestoreError(err, OperationType.CREATE, "payments");
+          throw err;
+        }
+
+        // Save payment to MySQL
+        try {
+          await fetch("/api/mysql/save-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              adId: docRef.id,
+              adTitle: title,
+              planType: adPlan,
+              amount: paymentValue,
+              payerEmail: sellerEmail || currentUser.email || "comprador@viva-local.com",
+              payerName: sellerName || currentUser.displayName || "Anunciante",
+              paymentMethod: selectedGateway === "mp_card" ? "cartao" : "pix",
+              status: "approved"
+            })
+          });
+          console.log("Sucesso ao registrar log de pagamento no MySQL.");
+        } catch (payMysqlErr) {
+          console.error("Falha ao salvar pagamento no MySQL:", payMysqlErr);
+        }
       }
 
       // Sync phone
@@ -1050,7 +1177,7 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
                 )}
 
                 <div className="flex flex-col gap-2 pt-1">
-                  {selectedGateway === "fake_pix" && (
+                  {(selectedGateway === "fake_pix" || selectedGateway === "mp_pix" || selectedGateway === "mp_card") && (
                     <button
                       type="button"
                       onClick={() => {
@@ -1059,11 +1186,11 @@ export default function PostAdModal({ isOpen, onClose, currentUser, onSuccess }:
                         setCheckoutStep("confirmed");
                         setTimeout(() => setShowPushNotification(false), 4500);
                       }}
-                      className="w-full py-3 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-extrabold rounded-xl text-xs transition-style hover:-translate-y-0.5 active:translate-y-0.5 shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-slate-950 font-black rounded-xl text-xs transition-all hover:-translate-y-0.5 active:translate-y-0.5 shadow-md flex items-center justify-center gap-2 cursor-pointer"
                       id="viva-checkout-manual-confirm"
                     >
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>Confirmar PIX Simulador Manualmente</span>
+                      <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />
+                      <span>Simular Aprovação da Transação (Testes Automáticos)</span>
                     </button>
                   )}
 

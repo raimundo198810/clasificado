@@ -18,7 +18,10 @@ export interface Ad {
   views: number;
   featured: boolean; // True for featured plans
   planType: "gratis" | "destaque_7" | "destaque_30" | "vip";
-  status: "approved" | "pending"; // Approval system
+  status: "approved" | "pending" | "publicado" | string; // Approval system
+  tipo_plano?: "gratis" | "destaque_7" | "destaque_30" | "vip" | string;
+  dias_destaque?: number;
+  data_expiracao?: string;
   createdAt: number; // millisecond timestamp
   tags: string[];
 }
