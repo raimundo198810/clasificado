@@ -3,6 +3,7 @@ export interface Ad {
   title: string;
   description: string;
   category: AdCategory;
+  subCategory?: string; // added subcategory support
   price: number;
   condition: AdCondition;
   locationState: string; // e.g. "São Paulo", "Rio de Janeiro"
@@ -11,9 +12,13 @@ export interface Ad {
   sellerEmail: string;
   sellerPhone: string;
   sellerId: string; // Firebase Auth UID
-  images: string[]; // URLs or Unsplash keywords
+  images: string[]; // URLs or Unsplash keywords (up to 5)
+  videoUrl?: string; // Link to YouTube, Vimeo index, etc.
+  sellerPhotoUrl?: string; // Advertiser profile/avatar photo
   views: number;
-  featured: boolean;
+  featured: boolean; // True for featured plans
+  planType: "gratis" | "destaque_7" | "destaque_30" | "vip";
+  status: "approved" | "pending"; // Approval system
   createdAt: number; // millisecond timestamp
   tags: string[];
 }
@@ -56,5 +61,29 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   phoneNumber?: string;
+  createdAt: number;
+  isAdmin?: boolean;
+}
+
+export interface PlanConfig {
+  id: string; // 'gratis' | 'destaque_7' | 'destaque_30' | 'vip'
+  name: string;
+  price: number;
+  durationDays: number;
+  maxPhotos: number;
+  allowVideo: boolean;
+  description: string;
+}
+
+export interface PaymentLog {
+  id: string;
+  adId?: string;
+  adTitle: string;
+  planType: string;
+  amount: number;
+  payerEmail: string;
+  payerName: string;
+  paymentMethod: "pix" | "cartao";
+  status: "approved" | "pending";
   createdAt: number;
 }

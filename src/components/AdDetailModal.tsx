@@ -4,7 +4,7 @@ import { Ad, UserProfile } from "../types";
 import { CATEGORY_LABELS } from "../lib/initialSeed";
 import { getRelativeDateString } from "./AdCard";
 import { doc, updateDoc, increment, setDoc, addDoc, collection } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, handleFirestoreError, OperationType } from "../firebase";
 
 interface AdDetailModalProps {
   ad: Ad | null;
@@ -71,28 +71,36 @@ export default function AdDetailModal({
       const chatId = `${ad.id}_${currentUser.uid}_${ad.sellerId}`;
       
       // 1. Create or set the main Chat coordinator doc
-      const chatDocRef = doc(db, "chats", chatId);
-      await setDoc(chatDocRef, {
-        id: chatId,
-        adId: ad.id,
-        adTitle: ad.title,
-        adPrice: ad.price,
-        buyerId: currentUser.uid,
-        buyerName: currentUser.displayName || currentUser.email?.split("@")[0] || "Comprador",
-        sellerId: ad.sellerId,
-        sellerName: ad.sellerName || "Vendedor",
-        lastMessage: chatMessage,
-        updatedAt: Date.now()
-      });
+      try {
+        const chatDocRef = doc(db, "chats", chatId);
+        await setDoc(chatDocRef, {
+          id: chatId,
+          adId: ad.id,
+          adTitle: ad.title,
+          adPrice: ad.price,
+          buyerId: currentUser.uid,
+          buyerName: currentUser.displayName || currentUser.email?.split("@")[0] || "Comprador",
+          sellerId: ad.sellerId,
+          sellerName: ad.sellerName || "Vendedor",
+          lastMessage: chatMessage,
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `chats/${chatId}`);
+      }
 
       // 2. Add individual message
-      await addDoc(collection(db, "chatMessages"), {
-        chatId: chatId,
-        senderId: currentUser.uid,
-        senderName: currentUser.displayName || currentUser.email?.split("@")[0] || "Comprador",
-        text: chatMessage,
-        createdAt: Date.now()
-      });
+      try {
+        await addDoc(collection(db, "chatMessages"), {
+          chatId: chatId,
+          senderId: currentUser.uid,
+          senderName: currentUser.displayName || currentUser.email?.split("@")[0] || "Comprador",
+          text: chatMessage,
+          createdAt: Date.now()
+        });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, "chatMessages");
+      }
 
       setChatMessage("");
       setMsgSuccess(true);
@@ -180,21 +188,59 @@ export default function AdDetailModal({
 
               {/* Badges */}
               <div className="flex flex-wrap gap-1.5 pt-2">
-                {ad.condition && ad.condition !== "nao_aplica" && (
-                  <span className="bg-gray-100 text-gray-700 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
-                    Condição: {ad.condition === "novo" ? "Novo" : "Usado"}
+                {ad.planType === "vip" && (
+                  <span className="bg-amber-100 text-amber-700 border border-amber-300 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center shadow-2xs">
+                    👑 VIP MÁXIMO
                   </span>
                 )}
-                <span className="bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center">
-                  <MapPin className="h-3 w-3 mr-1" /> {ad.locationCity}, {ad.locationState}
+                {ad.planType?.startsWith("destaque") && (
+                  <span className="bg-blue-100 text-blue-700 border border-blue-200 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center shadow-2xs">
+                    ⭐ DESTAQUE
+                  </span>
+                )}
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center">
+                  ✅ Anunciante Verificado
                 </span>
-                <span className="bg-gray-150 text-gray-500 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center font-mono">
-                  <Eye className="h-3 w-3 mr-1" /> {ad.views || 0} visualizações
+                {ad.planType !== "gratis" && (
+                  <span className="bg-gray-100 text-gray-700 border border-gray-200 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center">
+                    🔒 Pagamento Seguro
+                  </span>
+                )}
+                {ad.condition && ad.condition !== "nao_aplica" && (
+                  <span className="bg-gray-100 text-gray-750 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
+                    {ad.condition === "novo" ? "Novo" : "Usado"}
+                  </span>
+                )}
+                <span className="bg-gray-100 text-gray-650 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center">
+                  <MapPin className="h-3 w-3 mr-1 text-[#E52B50]" /> {ad.locationCity}, {ad.locationState}
+                </span>
+                <span className="bg-gray-50 text-gray-500 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm flex items-center font-mono">
+                  <Eye className="h-3 w-3 mr-1" /> {ad.views || 0} acessos
                 </span>
               </div>
             </div>
 
             {/* Description Segment */}
+            {ad.videoUrl && (
+              <div className="mt-6 p-4 bg-orange-50/40 border border-orange-100 rounded-2xl space-y-2">
+                <span className="text-[10px] font-black text-rose-600 uppercase tracking-widest flex items-center gap-1.5 leading-none">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+                  🎥 VÍDEO COMPARTILHADO DO PRODUTO
+                </span>
+                <p className="text-[11px] text-gray-500 font-semibold leading-normal">
+                  Este anunciante adicionou um vídeo demonstrativo em seu anúncio de plano destacado!
+                </p>
+                <a
+                  href={ad.videoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-black text-slate-100 bg-[#E52B50] hover:bg-rose-600 py-2 px-4 rounded-xl shadow-xs transition-colors cursor-pointer"
+                >
+                  Assista ao Vídeo do Anúncio (Clique Aqui) ↗
+                </a>
+              </div>
+            )}
+
             <div className="mt-6">
               <h3 className="text-xs font-extrabold text-gray-900 uppercase tracking-widest border-b border-gray-150 pb-2 mb-3">
                 Descrição do Item
@@ -229,8 +275,12 @@ export default function AdDetailModal({
           <div>
             {/* Seller Quick Info ID card */}
             <div className="p-4 bg-white border border-gray-150 rounded-2xl shadow-2xs text-center space-y-3">
-              <div className="mx-auto w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-amber-600 font-bold text-lg shadow-2xs">
-                <User className="h-6 w-6" />
+              <div className="mx-auto w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 font-bold overflow-hidden border-2 border-amber-500/15 shadow-2xs relative shrink-0">
+                {ad.sellerPhotoUrl ? (
+                  <img src={ad.sellerPhotoUrl} alt="Vendedor" className="w-full h-full object-cover" />
+                ) : (
+                  <User className="h-6 w-6" />
+                )}
               </div>
               <div>
                 <h4 className="text-sm font-bold text-gray-900 leading-tight">

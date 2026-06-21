@@ -80,6 +80,21 @@ export default function AdCard({ ad, onClick }: AdCardProps) {
     setIsHovered(false);
   };
 
+  // Determine styles depending on the tier/planType
+  const isVip = ad.planType === "vip";
+  const isDestaque30 = ad.planType === "destaque_30";
+  const isDestaque7 = ad.planType === "destaque_7";
+  const isPaid = isVip || isDestaque30 || isDestaque7;
+
+  let borderClasses = "border-gray-150 shadow-[0_4px_12px_rgba(0,0,0,0.03),_0_3px_0_0_#e2e8f0] hover:shadow-[0_16px_30px_-6px_rgba(0,0,0,0.08),_0_5px_0_0_#cbd5e1]";
+  if (isVip) {
+    borderClasses = "border-amber-400 bg-gradient-to-b from-amber-50/20 to-white shadow-[0_8px_25px_rgba(217,119,6,0.18),_0_4px_0_0_#d97706] hover:shadow-[0_24px_45px_rgba(217,119,6,0.28),_0_6px_0_0_#d97706] ring-1 ring-amber-300";
+  } else if (isDestaque30) {
+    borderClasses = "border-orange-300 bg-gradient-to-b from-orange-50/10 to-white shadow-[0_6px_18px_rgba(249,115,22,0.12),_0_3px_0_0_#f97316] hover:shadow-[0_20px_35px_rgba(249,115,22,0.22),_0_5px_0_0_#f97316]";
+  } else if (isDestaque7) {
+    borderClasses = "border-amber-200 bg-gradient-to-b from-amber-50/5 to-white shadow-[0_4px_12px_rgba(245,158,11,0.08),_0_3px_0_0_#f59e0b] hover:shadow-[0_16px_30px_rgba(245,158,11,0.18),_0_5px_0_0_#f59e0b]";
+  }
+
   return (
     <motion.div
       ref={cardRef}
@@ -88,7 +103,7 @@ export default function AdCard({ ad, onClick }: AdCardProps) {
       animate={{
         rotateX: rotateX,
         rotateY: rotateY,
-        scale: isHovered ? (ad.featured ? 1.025 : 1.015) : 1,
+        scale: isHovered ? (isPaid ? 1.025 : 1.015) : 1,
         y: isHovered ? -5 : 0
       }}
       transition={{
@@ -102,13 +117,16 @@ export default function AdCard({ ad, onClick }: AdCardProps) {
         perspective: "1000px"
       }}
       onClick={onClick}
-      className={`bg-white rounded-2xl border relative transition-all duration-300 ${
-        ad.featured 
-          ? "border-amber-450 shadow-[0_4px_12px_rgba(245,158,11,0.12),_0_4px_0_0_#fbbf24] hover:shadow-[0_20px_35px_-8px_rgba(245,158,11,0.22),_0_6px_0_0_#fbbf24]" 
-          : "border-gray-150 shadow-[0_4px_12px_rgba(0,0,0,0.03),_0_3px_0_0_#e2e8f0] hover:shadow-[0_16px_30px_-6px_rgba(0,0,0,0.08),_0_5px_0_0_#cbd5e1]"
-      } overflow-hidden cursor-pointer flex flex-col h-full group`}
+      className={`bg-white rounded-2xl border relative transition-all duration-300 ${borderClasses} overflow-hidden cursor-pointer flex flex-col h-full group`}
       id={`viva-ad-card-${ad.id}`}
     >
+      {/* Pending status tag for moderation view */}
+      {ad.status === "pending" && (
+        <div className="absolute top-0 inset-x-0 bg-yellow-500 text-white text-[10px] font-bold text-center py-1 z-40 shadow-xs">
+          Aguardando Aprovação Moderador
+        </div>
+      )}
+
       {/* Dynamic Shine Light Reflection Layer for 3D Material Effect */}
       {isHovered && (
         <div
@@ -130,23 +148,60 @@ export default function AdCard({ ad, onClick }: AdCardProps) {
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           onError={(e) => {
-            // Fallback in case of expired Unsplash links
             e.currentTarget.src = "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=600";
           }}
         />
 
-        {/* Highlighted Premium Golden Banner */}
-        {ad.featured && (
-          <span className="absolute top-2.5 left-2.5 bg-gradient-to-r from-amber-500 to-[#F59E0B] text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1">
-            <Sparkles className="h-3 w-3 animate-spin text-amber-100" /> Destaque
-          </span>
-        )}
+        {/* Plan overlay badges */}
+        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1 z-20">
+          {isVip && (
+            <span className="bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1.5 border border-amber-300 animate-pulse">
+              👑 VIP
+            </span>
+          )}
+          {isDestaque30 && (
+            <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 border border-orange-400">
+              ⭐ Destaque Premium
+            </span>
+          )}
+          {isDestaque7 && (
+            <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1 border border-amber-400">
+              ⭐ Destaque
+            </span>
+          )}
+          
+          {/* Trust Seal: Anunciante Verificado */}
+          {(isPaid || ad.sellerId === "system_admin_seed") && (
+            <span className="bg-emerald-600/90 backdrop-blur-xs text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm shadow-xs flex items-center gap-1 w-fit">
+              ✅ Verificado
+            </span>
+          )}
+        </div>
 
         {/* Condition details */}
         {ad.condition && ad.condition !== "nao_aplica" && (
-          <span className="absolute bottom-2.5 right-2.5 bg-gray-900/85 backdrop-blur-xs text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
+          <span className="absolute bottom-2.5 left-2.5 bg-gray-900/85 backdrop-blur-xs text-white text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
             {ad.condition === "novo" ? "Novo" : "Usado"}
           </span>
+        )}
+
+        {/* Advertiser Premium photo in overlay bottom-right for VIPs */}
+        {isVip && ad.sellerPhotoUrl && (
+          <div className="absolute bottom-2 right-2 flex items-center gap-1 z-20">
+            <div className="relative">
+              <img
+                src={ad.sellerPhotoUrl}
+                alt={ad.sellerName}
+                className="w-9 h-9 rounded-full object-cover border-2 border-amber-400 bg-white"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 bg-amber-500 text-white p-0.5 rounded-full text-[6px] border border-white">
+                👑
+              </span>
+            </div>
+          </div>
         )}
       </div>
 
@@ -159,24 +214,41 @@ export default function AdCard({ ad, onClick }: AdCardProps) {
           {/* Category & Date Line */}
           <div className="flex justify-between items-center mb-2">
             <span className="text-[10px] uppercase font-heavy tracking-wider font-sans text-[#E52B50] font-black">
-              {categoryInfo?.label || "Geral"}
+              {categoryInfo?.label || "Geral"} {ad.subCategory ? `• ${ad.subCategory}` : ""}
             </span>
-            <div className="flex items-center text-[10px] text-gray-400 font-medium">
+            <div className="flex items-center text-[10px] text-gray-400 font-medium font-mono">
               <Calendar className="h-3 w-3 mr-1" />
               {getRelativeDateString(ad.createdAt)}
             </div>
           </div>
 
           {/* Ad Title */}
-          <h3 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug group-hover:text-[#E52B50] transition-colors mb-2">
+          <h3 className={`text-sm font-bold leading-snug transition-colors mb-2 line-clamp-2 ${
+            isVip 
+              ? "text-amber-950 group-hover:text-amber-600 text-[15px] font-extrabold" 
+              : "text-gray-800 group-hover:text-[#E52B50]"
+          }`}>
             {ad.title}
           </h3>
+          
+          <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3">
+            {ad.description}
+          </p>
         </div>
 
         {/* Pricing, Location and Stats Footer */}
         <div className="mt-2 pt-2.5 border-t border-gray-100 flex flex-col gap-1.5">
-          <div className="text-base font-black text-gray-950 tracking-tight">
-            {ad.category === "empregos" ? `${formattedPrice} / mês` : formattedPrice}
+          <div className="flex items-baseline justify-between">
+            <div className={`text-base tracking-tight font-black ${isVip ? "text-amber-600 text-lg" : "text-gray-950"}`}>
+              {ad.category === "empregos" ? `${formattedPrice} / mês` : formattedPrice}
+            </div>
+            
+            {/* Secures lock badge */}
+            {isPaid && (
+              <span className="text-[9px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md font-bold flex items-center gap-0.5">
+                🔒 Pagamento Seguro
+              </span>
+            )}
           </div>
 
           <div className="flex items-center justify-between text-[11px] text-gray-500 font-medium">
@@ -195,4 +267,5 @@ export default function AdCard({ ad, onClick }: AdCardProps) {
     </motion.div>
   );
 }
+
 export { getRelativeDateString };

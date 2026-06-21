@@ -18,6 +18,7 @@ interface HeaderProps {
   setSelectedCity: (city: string) => void;
   onToggleFilters: () => void;
   unreadCount: number;
+  onOpenAdmin: () => void;
 }
 
 const BRAZIL_STATES = [
@@ -66,7 +67,8 @@ export default function Header({
   selectedCity,
   setSelectedCity,
   onToggleFilters,
-  unreadCount
+  unreadCount,
+  onOpenAdmin
 }: HeaderProps) {
   const [cep, setCep] = React.useState("");
   const [isFetchingCep, setIsFetchingCep] = React.useState(false);
@@ -199,6 +201,18 @@ export default function Header({
                   >
                     {showingMyAdsOnly ? "Ver Todos os Anúncios" : "Meus Anúncios"}
                   </button>
+
+                  {/* Admin Panel Toggle */}
+                  {currentUser?.isAdmin && (
+                    <button
+                      id="viva-btn-admin-panel"
+                      onClick={onOpenAdmin}
+                      className="px-3 py-1.5 text-xs font-black rounded-lg border bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-gray-950 border-amber-500 hover:border-amber-600 transition-all select-none cursor-pointer flex items-center gap-1 shadow-2xs"
+                      title="Acessar o Painel de Controle de Moderadores"
+                    >
+                      👑 Painel Admin
+                    </button>
+                  )}
 
                   {/* Account info */}
                   <div className="hidden lg:flex flex-col text-right">

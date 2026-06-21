@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { auth, db, handleFirestoreError, OperationType } from "./firebase";
 import { Ad, AdCategory, AdCondition, Chat, UserProfile } from "./types";
 import { ensureSeedData } from "./lib/initialSeed";
 
@@ -14,6 +14,7 @@ import PostAdModal from "./components/PostAdModal";
 import ChatInbox from "./components/ChatInbox";
 import AuthModal from "./components/AuthModal";
 import FooterModal from "./components/FooterModal";
+import AdminPanel from "./components/AdminPanel";
 
 // Icons
 import { SlidersHorizontal, ArrowUpDown, RefreshCw, X, HelpCircle, MessageSquare, Plus, Info, Check, MessageCircle, Phone, ExternalLink, ShieldAlert, ChevronRight } from "lucide-react";
@@ -45,6 +46,7 @@ export default function App() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Modal Triggers
+  const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isPostAdOpen, setIsPostAdOpen] = useState(false);
   const [isInboxOpen, setIsInboxOpen] = useState(false);
@@ -85,6 +87,21 @@ export default function App() {
 
   // 2. Auth State Synchronizer
   useEffect(() => {
+    const checkLocalMock = () => {
+      const savedMock = localStorage.getItem("viva_mock_user");
+      if (savedMock) {
+        try {
+          setCurrentUser(JSON.parse(savedMock));
+        } catch {
+          setCurrentUser(null);
+          setShowingMyAdsOnly(false);
+        }
+      } else {
+        setCurrentUser(null);
+        setShowingMyAdsOnly(false);
+      }
+    };
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setCurrentUser({
@@ -94,11 +111,17 @@ export default function App() {
           createdAt: Date.now()
         });
       } else {
-        setCurrentUser(null);
-        setShowingMyAdsOnly(false);
+        checkLocalMock();
       }
     });
-    return () => unsubscribe();
+
+    // Listen to custom local auth change triggers for simulated operations
+    window.addEventListener("viva_local_auth_changed", checkLocalMock);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener("viva_local_auth_changed", checkLocalMock);
+    };
   }, []);
 
   // 3. Real-time listings Firestore snapshot sync
@@ -116,6 +139,7 @@ export default function App() {
     }, (error) => {
       console.error("Firestore loading error:", error);
       setLoadingAds(false);
+      handleFirestoreError(error, OperationType.GET, "ads");
     });
 
     return () => unsubscribe();
@@ -141,6 +165,8 @@ export default function App() {
       });
       // In realistic apps, we would compare read timestamps; here we show active thread volumes!
       setUnreadCount(count);
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, "chats");
     });
 
     return () => unsubscribe();
@@ -150,10 +176,12 @@ export default function App() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setCurrentUser(null);
     } catch (e) {
       console.log("Logout discrepancy:", e);
     }
+    localStorage.removeItem("viva_mock_user");
+    setCurrentUser(null);
+    window.dispatchEvent(new Event("viva_local_auth_changed"));
   };
 
   // 5. Client-side Search, Filtering, and Sorting computation
@@ -194,11 +222,30 @@ export default function App() {
     // H) Condition check
     if (conditionFilter && ad.condition !== conditionFilter) return false;
 
+    // I) Approval Status validation: Hide pending draft ads from standard tourists, unless user is creator
+    if (ad.status === "pending" && ad.sellerId !== currentUser?.uid) {
+      return false;
+    }
+
     return true;
   });
 
-  // Apply sorting option
+  // Apply sorting option: VIP > Destaque 30 Dias > Destaque 7 Dias > Gratuitos
   const sortedAds = [...filteredAds].sort((a, b) => {
+    const planPriority: Record<string, number> = {
+      vip: 4,
+      destaque_30: 3,
+      destaque_7: 2,
+      gratis: 1
+    };
+
+    const priorityA = planPriority[a.planType] || 1;
+    const priorityB = planPriority[b.planType] || 1;
+
+    if (priorityB !== priorityA) {
+      return priorityB - priorityA; // Higher plan priority first
+    }
+
     if (sortBy === "price_asc") {
       return a.price - b.price;
     }
@@ -252,6 +299,7 @@ export default function App() {
         setSelectedCity={setSelectedCity}
         onToggleFilters={() => setShowFilters(!showFilters)}
         unreadCount={unreadCount}
+        onOpenAdmin={() => setIsAdminPanelOpen(true)}
       />
 
       {/* 2. Category Navigation Badges */}
@@ -682,7 +730,9 @@ export default function App() {
             isOpen={isPostAdOpen}
             onClose={() => setIsPostAdOpen(false)}
             currentUser={currentUser}
-            onSuccess={() => {}}
+            onSuccess={() => {
+              setShowingMyAdsOnly(true);
+            }}
           />
         )}
 
@@ -710,6 +760,14 @@ export default function App() {
             isOpen={isFooterOpen}
             onClose={() => setIsFooterOpen(false)}
             initialTab={footerTab}
+          />
+        )}
+
+        {isAdminPanelOpen && currentUser?.isAdmin && (
+          <AdminPanel
+            isOpen={isAdminPanelOpen}
+            onClose={() => setIsAdminPanelOpen(false)}
+            allAds={ads}
           />
         )}
       </AnimatePresence>

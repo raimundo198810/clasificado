@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Send, User, MessageCircle, ShoppingBag, ArrowLeft, Loader2 } from "lucide-react";
 import { Chat, ChatMessage, UserProfile } from "../types";
 import { collection, query, where, orderBy, onSnapshot, addDoc, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, handleFirestoreError, OperationType } from "../firebase";
 
 interface ChatInboxProps {
   isOpen: boolean;
@@ -46,6 +46,7 @@ export default function ChatInbox({ isOpen, onClose, currentUser }: ChatInboxPro
     }, (error) => {
       console.error("Error querying conversations:", error);
       setLoadingChats(false);
+      handleFirestoreError(error, OperationType.GET, "chats");
     });
 
     return () => unsubscribe();
@@ -80,6 +81,7 @@ export default function ChatInbox({ isOpen, onClose, currentUser }: ChatInboxPro
     }, (error) => {
       console.error("Error querying chat messages:", error);
       setLoadingMsgs(false);
+      handleFirestoreError(error, OperationType.GET, "chatMessages");
     });
 
     return () => unsubscribe();
@@ -102,20 +104,28 @@ export default function ChatInbox({ isOpen, onClose, currentUser }: ChatInboxPro
 
     try {
       // 1. Add Message document
-      await addDoc(collection(db, "chatMessages"), {
-        chatId: selectedChat.id,
-        senderId: currentUser.uid,
-        senderName: currentUser.displayName || currentUser.email?.split("@")[0] || "Usuário",
-        text: currentMsg,
-        createdAt: Date.now()
-      });
+      try {
+        await addDoc(collection(db, "chatMessages"), {
+          chatId: selectedChat.id,
+          senderId: currentUser.uid,
+          senderName: currentUser.displayName || currentUser.email?.split("@")[0] || "Usuário",
+          text: currentMsg,
+          createdAt: Date.now()
+        });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, "chatMessages");
+      }
 
       // 2. Update Chat document with last message
-      const chatDocRef = doc(db, "chats", selectedChat.id);
-      await updateDoc(chatDocRef, {
-        lastMessage: currentMsg,
-        updatedAt: Date.now()
-      });
+      try {
+        const chatDocRef = doc(db, "chats", selectedChat.id);
+        await updateDoc(chatDocRef, {
+          lastMessage: currentMsg,
+          updatedAt: Date.now()
+        });
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, `chats/${selectedChat.id}`);
+      }
     } catch (err) {
       console.error("SendMessage error:", err);
     }
