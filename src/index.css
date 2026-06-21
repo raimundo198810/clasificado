@@ -28,6 +28,36 @@
   animation: float3d 6s ease-in-out infinite;
 }
 
+@keyframes shine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes slow-pulse-glow {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(229, 43, 80, 0.4)); }
+  50% { transform: scale(1.08); filter: drop-shadow(0 0 15px rgba(229, 43, 80, 0.8)) drop-shadow(0 0 25px rgba(245, 158, 11, 0.4)); }
+}
+
+@keyframes gentle-sway {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50% { transform: rotate(3deg) translateY(-2px); }
+}
+
+@utility animate-logo-shine {
+  background: linear-gradient(135deg, #E52B50 0%, #F59E0B 25%, #4F46E5 50%, #F59E0B 75%, #E52B50 100%);
+  background-size: 400% 400%;
+  animation: shine 8s ease infinite;
+}
+
+@utility animate-logo-glow {
+  animation: slow-pulse-glow 3s ease-in-out infinite;
+}
+
+@utility animate-logo-sway {
+  animation: gentle-sway 4s ease-in-out infinite;
+}
+
 .three-dimension-mesh {
   background-image: radial-gradient(#e52b5006 2px, transparent 2px), radial-gradient(#1c2c5404 1.5px, transparent 1.5px);
   background-size: 24px 24px;

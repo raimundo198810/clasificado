@@ -178,27 +178,44 @@ export default function Header({
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div 
-              className="flex items-center space-x-2 cursor-pointer transition-transform duration-150 active:scale-95" 
+              className="flex items-center space-x-3 cursor-pointer transition-transform duration-150 active:scale-95 group" 
               onClick={() => onShowMyAdsOnly(false)}
               id="viva-logo-container"
             >
-              {/* Premium VivaLocal Logo Symbol */}
-              <div className="bg-gradient-to-br from-orange-500 via-orange-600 to-rose-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center animate-pulse">
-                <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current" xmlns="http://www.w3.org/2000/svg">
-                  {/* speech bubble heart icon typical of premium vivalocal */}
-                  <path d="M12 2C6.48 2 2 6.48 2 12c0 2.21.72 4.25 1.94 5.91l-.86 3.1c-.24.87.59 1.6 1.41 1.25l2.9-.12C8.61 22.68 10.26 23 12 23c5.52 0 10-4.48 10-10S17.52 2 12 2zm1 14.28c-.28.1-.53.12-.76.12-.47 0-.78-.17-.91-.48l-.94-2.12c-.22-.52-.51-.89-.92-1.07l-1.92-.81c-.49-.15-.76-.48-.76-.92s.27-.78.73-.93l2.12-.64c.54-.15.91-.45 1.1-.92l.82-1.93c.15-.36.46-.57.85-.57s.71.21.87.57l.81 1.92c.19.47.56.77 1.1.92l2.12.64c.48.15.75.49.75.93s-.27.77-.76.92l-1.92.81c-.41.18-.7.55-.92 1.07l-.94 2.12a.93.93 0 01-.15.35c.01.01.01.01 0 0z"/>
-                </svg>
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-2xl font-black font-sans tracking-tight text-[#E52B50]">
-                    viva<span className="text-[#122A50]">local</span>
+              {/* Premium Animated VivaLocal Logo Symbol */}
+              <div className="relative">
+                {/* Glow behind the icon */}
+                <div className="absolute inset-0 bg-[#E52B50]/25 rounded-xl blur-md scale-95 group-hover:scale-110 transition-transform duration-300"></div>
+                
+                {/* Main animated icon wrapper */}
+                <div className="relative bg-gradient-to-br from-[#E52B50] via-[#EF4444] to-[#F59E0B] text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center animate-logo-glow">
+                  <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current animate-logo-sway" xmlns="http://www.w3.org/2000/svg">
+                    {/* speech bubble heart icon typical of premium vivalocal */}
+                    <path d="M12 2C6.48 2 2 6.48 2 12c0 2.21.72 4.25 1.94 5.91l-.86 3.1c-.24.87.59 1.6 1.41 1.25l2.9-.12C8.61 22.68 10.26 23 12 23c5.52 0 10-4.48 10-10S17.52 2 12 2zm1 14.28c-.28.1-.53.12-.76.12-.47 0-.78-.17-.91-.48l-.94-2.12c-.22-.52-.51-.89-.92-1.07l-1.92-.81c-.49-.15-.76-.48-.76-.92s.27-.78.73-.93l2.12-.64c.54-.15.91-.45 1.1-.92l.82-1.93c.15-.36.46-.57.85-.57s.71.21.87.57l.81 1.92c.19.47.56.77 1.1.92l2.12.64c.48.15.75.49.75.93s-.27.77-.76.92l-1.92.81c-.41.18-.7.55-.92 1.07l-.94 2.12a.93.93 0 01-.15.35c.01.01.01.01 0 0z"/>
+                  </svg>
+                  {/* Subtle sparkle indicators */}
+                  <span className="absolute top-1 right-1 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                   </span>
-                  <span className="text-[10px] font-bold text-gray-400 font-mono">.com.br</span>
                 </div>
-                <p className="text-[9px] font-bold font-mono text-gray-400 tracking-wider uppercase leading-none">
-                  Líder em Anúncios Locais do Brasil
-                </p>
+              </div>
+
+              {/* Glowing, shining and animating title */}
+              <div className="flex flex-col select-none">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black font-sans tracking-tight animate-logo-shine bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-300">
+                    VivaLocal
+                  </span>
+                  <span className="text-[9px] font-black text-[#E52B50] font-mono animate-pulse">classificado.com.br</span>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-hidden">
+                  <p className="text-[10px] font-extrabold font-sans text-[#122A50] tracking-widest uppercase transition-all duration-300 group-hover:translate-x-1">
+                    Classificados
+                  </p>
+                  {/* Animated line underneath or next to the text */}
+                  <span className="h-1 w-8 rounded bg-gradient-to-r from-[#E52B50] to-amber-500 animate-pulse"></span>
+                </div>
               </div>
             </div>
 
