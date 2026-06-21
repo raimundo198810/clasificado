@@ -1,0 +1,6 @@
+{
+  "name": "Classificados VivaLocal",
+  "description": "Um portal completo de anúncios classificados locais para compra, venda, serviços, empregos e imóveis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
